@@ -878,23 +878,25 @@ ALTER TABLE network_edge_attributes DROP COLUMN IF EXISTS facility_cnt_pharmacy;
 DROP TABLE IF EXISTS network_edge_attributes_tmp;
 CREATE TABLE network_edge_attributes_tmp AS (
     SELECT a.*,
-           -- Base facilities score: share of selected facility types present near an edge (0..1).
-           -- Profile-specific type weights are applied during index calculation.
-           round(
-               (
-                   (CASE WHEN coalesce(b.facility_cnt_shelter, 0) > 0 THEN 1 ELSE 0 END) +
-                   (CASE WHEN coalesce(b.facility_cnt_toilets, 0) > 0 THEN 1 ELSE 0 END) +
-                   (CASE WHEN coalesce(b.facility_cnt_drinking_water, 0) > 0 THEN 1 ELSE 0 END) +
-                   (CASE WHEN coalesce(b.facility_cnt_pharmacy, 0) > 0 THEN 1 ELSE 0 END)
-               ) / 4.0,
-               4
-           )::numeric AS facilities,
+           -- Facilities density per 100m is capped at 5, then normalized to 0..1.
+           coalesce(round((least((
+               (coalesce(b.facility_cnt_shelter, 0) +
+                coalesce(b.facility_cnt_toilets, 0) +
+                coalesce(b.facility_cnt_drinking_water, 0) +
+                coalesce(b.facility_cnt_pharmacy, 0)
+               )::numeric / nullif(c.length, 0) * 100.0
+           ), 5.0) / 5.0)::numeric, 4), 0)::numeric AS facilities,
            coalesce(b.facility_cnt_shelter, 0)::integer AS facility_cnt_shelter,
            coalesce(b.facility_cnt_toilets, 0)::integer AS facility_cnt_toilets,
            coalesce(b.facility_cnt_drinking_water, 0)::integer AS facility_cnt_drinking_water,
-           coalesce(b.facility_cnt_pharmacy, 0)::integer AS facility_cnt_pharmacy
+           coalesce(b.facility_cnt_pharmacy, 0)::integer AS facility_cnt_pharmacy,
+           coalesce(round((least((coalesce(b.facility_cnt_shelter, 0)::numeric / nullif(c.length, 0) * 100.0), 5.0) / 5.0)::numeric, 4), 0)::numeric AS facility_density_shelter,
+           coalesce(round((least((coalesce(b.facility_cnt_toilets, 0)::numeric / nullif(c.length, 0) * 100.0), 5.0) / 5.0)::numeric, 4), 0)::numeric AS facility_density_toilets,
+           coalesce(round((least((coalesce(b.facility_cnt_drinking_water, 0)::numeric / nullif(c.length, 0) * 100.0), 5.0) / 5.0)::numeric, 4), 0)::numeric AS facility_density_drinking_water,
+           coalesce(round((least((coalesce(b.facility_cnt_pharmacy, 0)::numeric / nullif(c.length, 0) * 100.0), 5.0) / 5.0)::numeric, 4), 0)::numeric AS facility_density_pharmacy
     FROM network_edge_attributes a
         LEFT JOIN facility_selected b USING (edge_id)
+        LEFT JOIN network_edge c USING (edge_id)
 );
 
 DROP TABLE network_edge_attributes;
@@ -919,7 +921,7 @@ CREATE TABLE crossing_count AS ( -- 20 s
 DROP TABLE IF EXISTS crossing_ratio;
 CREATE TABLE crossing_ratio AS ( -- 4 s
     SELECT a.edge_id,
-           (a.crossing_count / b.length * 100.0)::numeric AS crossing_ratio
+        least((a.crossing_count / b.length * 100.0), 25.0)::numeric AS crossing_ratio
     FROM crossing_count a
          LEFT JOIN network_edge b USING (edge_id)
 );
@@ -1219,6 +1221,10 @@ ALTER TABLE network_edge_attributes
     ADD COLUMN IF NOT EXISTS facility_cnt_toilets integer,
     ADD COLUMN IF NOT EXISTS facility_cnt_drinking_water integer,
     ADD COLUMN IF NOT EXISTS facility_cnt_pharmacy integer,
+    ADD COLUMN IF NOT EXISTS facility_density_shelter numeric,
+    ADD COLUMN IF NOT EXISTS facility_density_toilets numeric,
+    ADD COLUMN IF NOT EXISTS facility_density_drinking_water numeric,
+    ADD COLUMN IF NOT EXISTS facility_density_pharmacy numeric,
     ADD COLUMN IF NOT EXISTS crossings numeric,
     ADD COLUMN IF NOT EXISTS buildings numeric,
     ADD COLUMN IF NOT EXISTS greenness numeric,

@@ -93,12 +93,12 @@ def _is_numeric_class_key(key) -> bool:
 
 
 def _build_facility_weight_expression(facility_weights: dict) -> str:
-    """Build normalized facilities score from named facility-type weights."""
+    """Build normalized facilities score from named facility-type density weights."""
     facility_columns = {
-        "shelter": "facility_cnt_shelter",
-        "toilets": "facility_cnt_toilets",
-        "drinking_water": "facility_cnt_drinking_water",
-        "pharmacy": "facility_cnt_pharmacy",
+        "shelter": "facility_density_shelter",
+        "toilets": "facility_density_toilets",
+        "drinking_water": "facility_density_drinking_water",
+        "pharmacy": "facility_density_pharmacy",
     }
 
     weight_terms = []
@@ -124,7 +124,7 @@ def _build_facility_weight_expression(facility_weights: dict) -> str:
 
         weight_total += weight
         column = facility_columns[key]
-        weight_terms.append(f"(CASE WHEN coalesce({column}, 0) > 0 THEN {weight} ELSE 0 END)")
+        weight_terms.append(f"(coalesce({column}, 0) * {weight})")
 
     if weight_total <= 0 or len(weight_terms) == 0:
         return "0"
