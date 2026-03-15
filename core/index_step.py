@@ -131,6 +131,16 @@ def _build_facility_weight_expression(facility_weights: dict) -> str:
 
     return f"(({ ' + '.join(weight_terms) }) / {weight_total})"
 
+
+def _uses_named_facilities_classes(indicator_yml: dict) -> bool:
+    """Return true when facilities mapping uses named keys like toilets/shelter."""
+    if h.get_safe_name(indicator_yml.get("indicator")) != "facilities":
+        return False
+    classes = indicator_yml.get("classes")
+    if not isinstance(classes, dict):
+        return False
+    return any(not _is_numeric_class_key(class_key) for class_key in classes.keys())
+
 def _build_sql_indicator_mapping_internal_(indicator_yml: dict, name_hierarchy: str = "", force_default_value: bool = False, def_value = None) -> str:
     indicator_name = h.get_safe_name(indicator_yml.get('indicator'))
     full_name = name_hierarchy + indicator_name
@@ -228,10 +238,12 @@ def _build_sql_indicator_mapping_internal_(indicator_yml: dict, name_hierarchy: 
 
 def _build_sql_indicator_mapping(indicator_yml: dict) -> str:
     indicator_name = h.get_safe_name(indicator_yml.get('indicator'))
+    uses_named_facilities = _uses_named_facilities_classes(indicator_yml)
     value_assignments = _build_sql_indicator_mapping_internal_(indicator_yml)
     # compile full indicator SQL around indicator mapping code
+    condition = f"{indicator_name}_weight IS NOT NULL" if uses_named_facilities else f"{indicator_name} IS NOT NULL AND {indicator_name}_weight IS NOT NULL"
     sql: str = f"""
-        IF {indicator_name} IS NOT NULL AND {indicator_name}_weight IS NOT NULL THEN
+        IF {condition} THEN
             indicator :=
                 {value_assignments};
             weight := {indicator_name}_weight / weights_sum;

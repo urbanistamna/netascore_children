@@ -878,14 +878,6 @@ ALTER TABLE network_edge_attributes DROP COLUMN IF EXISTS facility_cnt_pharmacy;
 DROP TABLE IF EXISTS network_edge_attributes_tmp;
 CREATE TABLE network_edge_attributes_tmp AS (
     SELECT a.*,
-           -- Facilities density per 100m is capped at 5, then normalized to 0..1.
-           coalesce(round((least((
-               (coalesce(b.facility_cnt_shelter, 0) +
-                coalesce(b.facility_cnt_toilets, 0) +
-                coalesce(b.facility_cnt_drinking_water, 0) +
-                coalesce(b.facility_cnt_pharmacy, 0)
-               )::numeric / nullif(c.length, 0) * 100.0
-           ), 5.0) / 5.0)::numeric, 4), 0)::numeric AS facilities,
            coalesce(b.facility_cnt_shelter, 0)::integer AS facility_cnt_shelter,
            coalesce(b.facility_cnt_toilets, 0)::integer AS facility_cnt_toilets,
            coalesce(b.facility_cnt_drinking_water, 0)::integer AS facility_cnt_drinking_water,
@@ -1216,7 +1208,6 @@ ALTER TABLE network_edge_attributes
     ADD COLUMN IF NOT EXISTS gradient_tf numeric,
     ADD COLUMN IF NOT EXISTS number_lanes_ft numeric,
     ADD COLUMN IF NOT EXISTS number_lanes_tf numeric,
-    ADD COLUMN IF NOT EXISTS facilities numeric,
     ADD COLUMN IF NOT EXISTS facility_cnt_shelter integer,
     ADD COLUMN IF NOT EXISTS facility_cnt_toilets integer,
     ADD COLUMN IF NOT EXISTS facility_cnt_drinking_water integer,
