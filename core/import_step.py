@@ -337,7 +337,8 @@ class OsmImporter(DbStep):
     def _load_osm_from_bbox(self, bbox: str, settings: dict):
         q_template: str = """
             [timeout:900][maxsize:1073741824];
-            nwr(__bbox__);
+            nwr[!"boundary"][!"place"][!power]["route"!="bus"]["route"!="road"]["route"!="ferry"]["route"!="power"]["route"!="train"]["route"!="railway"](__bbox__);
+            (._;>;);
             out;"""
         net_file = f"{GlobalSettings.osm_download_prefix}_{GlobalSettings.case_id}.xml"
         if os.path.isfile(os.path.join(GlobalSettings.data_directory, net_file)):
@@ -474,7 +475,7 @@ class OsmImporter(DbStep):
                        OR amenity IN ('university', 'school', 'college', 'gymnasium', 'kindergarten', 'childcare', 'boarding_school', 'music_school',
                                       'riding_school', 'driving_school', 'language_school', 'research_institute', 'school;dormitory', 'training', 'place_of_worship',
                                       'conference_centre', 'events_venue', 'exhibition_centre', 'social_centre', 'courthouse', 'post_office', 'ranger_station', 'townhall') -- institutional
-                       OR amenity IN ('post_box', 'bbq', 'bench', 'drinking_water', 'give_box', 'shelter', 'toilets', 'water_point', 'watering_place', 
+                       OR amenity IN ('post_box', 'bbq', 'drinking_water', 'give_box', 'shelter', 'toilets', 'water_point', 'watering_place', 
                                       'waste_basket', 'clock', 'kneipp_water_cure', 'lounger', 'vending_machine') -- infrastructure
                        OR tourism IN ('museum', 'attraction', 'gallery', 'viewpoint', 'zoo')
     
@@ -490,7 +491,8 @@ class OsmImporter(DbStep):
                        OR amenity IN ('university', 'school', 'college', 'gymnasium', 'kindergarten', 'childcare', 'boarding_school', 'music_school',
                                       'riding_school', 'driving_school', 'language_school', 'research_institute', 'school;dormitory', 'training', 'place_of_worship',
                                       'conference_centre', 'events_venue', 'exhibition_centre', 'social_centre', 'courthouse', 'post_office', 'ranger_station', 'townhall') -- institutional
-                       OR amenity IN ('post_box', 'bbq', 'bench', 'drinking_water', 'give_box', 'shelter', 'toilets', 'water_point', 'watering_place', 
+                       OR amenity IN ('post_box', 'bbq', 'be
+                       ', 'drinking_water', 'give_box', 'shelter', 'toilets', 'water_point', 'watering_place', 
                                       'waste_basket', 'clock', 'kneipp_water_cure', 'lounger', 'vending_machine') -- infrastructure
                        OR tourism IN ('museum', 'attraction', 'gallery', 'viewpoint', 'zoo')
                 );
@@ -528,6 +530,20 @@ class OsmImporter(DbStep):
     
                 CREATE INDEX water_geom_idx ON water USING gist (geom); -- 1 s
             ''', {'target_srid':GlobalSettings.get_target_srid()})
+            db.commit()
+        h.logEndTask()
+
+        # Create dataset "bench"
+        h.logBeginTask('create dataset "bench"')
+        if db.handle_conflicting_output_tables(['bench'], schema):
+            db.execute('''
+                CREATE TABLE bench AS (
+                    SELECT
+                        ST_Transform(way, %(target_srid)s)::geometry(Point, %(target_srid)s) AS geom
+                    FROM osm_point
+                    WHERE amenity = 'bench'
+                );
+            ''', {'target_srid': GlobalSettings.get_target_srid()})
             db.commit()
         h.logEndTask()
 

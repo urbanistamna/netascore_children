@@ -10,10 +10,11 @@ database:
   on_existing: delete # skip, delete, abort
   # for production environments, user and password should be specified as ENV variables instead
   password: postgres
-  username: postgres
-  host: netascore-db
-  port: 5432
-  dbname: postgres
+  username: amnaazeem
+  # host: netascore-db
+  host: localhost
+  port: 5433
+  dbname: netascore
 # -- end of optional db part --
 
 import:

@@ -59,7 +59,6 @@ indicator_mapping:
       "shared_lane": 0.5
       "undefined": 0.2
       "no": 0
-      "no_separate": 0
 
   - indicator: designated_route
     mapping:
@@ -78,7 +77,7 @@ indicator_mapping:
       "service": 0.85
       "calmed": 0.9
       "no_mit": 1
-      "track": 0
+      "path": 0
 
   - indicator: max_speed
     classes:
