@@ -133,8 +133,10 @@ indicator_mapping:
 
   - indicator: facilities
     classes:
-      g0: 1
-      e0: 0
+      shelter: 0.15
+      toilets: 0.20
+      drinking_water: 0.15
+      pharmacy: 0.20
 
   - indicator: crossings
     classes:

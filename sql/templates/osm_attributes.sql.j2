@@ -847,40 +847,60 @@ ALTER TABLE network_edge_attributes_tmp RENAME TO network_edge_attributes;
 -- calculate indicator "facilities"
 -- ---------------------------------------------------------------------------------------------------------------------
 {% if table_facility %}
-DROP TABLE IF EXISTS facility_count;
-CREATE TABLE facility_count AS ( -- 30 s
+DROP TABLE IF EXISTS facility_selected;
+CREATE TABLE facility_selected AS (
     SELECT b.edge_id,
-           count(a.*) AS facility_count
-    FROM {{ table_facility | sqlsafe }} a,
-         network_edge b
-    WHERE ST_DWithin(a.geom, b.geom, 30)
-    GROUP BY edge_id
-);
+        count(*) FILTER (WHERE a.amenity = 'shelter')::integer AS facility_cnt_shelter,
+        count(*) FILTER (WHERE a.amenity = 'toilets')::integer AS facility_cnt_toilets,
+        count(*) FILTER (WHERE a.amenity = 'drinking_water')::integer AS facility_cnt_drinking_water,
+        count(*) FILTER (WHERE a.amenity = 'pharmacy')::integer AS facility_cnt_pharmacy
+    FROM (
+        SELECT ST_Transform(way, {{target_srid}}) AS geom, amenity
+        FROM osm_point
+        WHERE amenity IN ('shelter', 'toilets', 'drinking_water', 'pharmacy')
 
-DROP TABLE IF EXISTS facility_ratio;
-CREATE TABLE facility_ratio AS ( -- 4 s
-    SELECT a.edge_id,
-           (a.facility_count / b.length * 100.0)::numeric AS facility_ratio
-    FROM facility_count a
-         LEFT JOIN network_edge b USING (edge_id)
-);
+        UNION ALL
 
--- ---------------------------------------------------------------------------------------------------------------------
+        SELECT ST_Transform(way, {{target_srid}}) AS geom, amenity
+        FROM osm_polygon
+        WHERE amenity IN ('shelter', 'toilets', 'drinking_water', 'pharmacy')
+    ) a
+    JOIN network_edge b ON ST_DWithin(a.geom, b.geom, 30)
+    GROUP BY b.edge_id
+);
 
 ALTER TABLE network_edge_attributes DROP COLUMN IF EXISTS facilities;
+ALTER TABLE network_edge_attributes DROP COLUMN IF EXISTS facility_cnt_shelter;
+ALTER TABLE network_edge_attributes DROP COLUMN IF EXISTS facility_cnt_toilets;
+ALTER TABLE network_edge_attributes DROP COLUMN IF EXISTS facility_cnt_drinking_water;
+ALTER TABLE network_edge_attributes DROP COLUMN IF EXISTS facility_cnt_pharmacy;
 
 DROP TABLE IF EXISTS network_edge_attributes_tmp;
 CREATE TABLE network_edge_attributes_tmp AS (
     SELECT a.*,
-           coalesce(round(b.facility_ratio, 2), 0)::numeric AS facilities
+           -- Base facilities score: share of selected facility types present near an edge (0..1).
+           -- Profile-specific type weights are applied during index calculation.
+           round(
+               (
+                   (CASE WHEN coalesce(b.facility_cnt_shelter, 0) > 0 THEN 1 ELSE 0 END) +
+                   (CASE WHEN coalesce(b.facility_cnt_toilets, 0) > 0 THEN 1 ELSE 0 END) +
+                   (CASE WHEN coalesce(b.facility_cnt_drinking_water, 0) > 0 THEN 1 ELSE 0 END) +
+                   (CASE WHEN coalesce(b.facility_cnt_pharmacy, 0) > 0 THEN 1 ELSE 0 END)
+               ) / 4.0,
+               4
+           )::numeric AS facilities,
+           coalesce(b.facility_cnt_shelter, 0)::integer AS facility_cnt_shelter,
+           coalesce(b.facility_cnt_toilets, 0)::integer AS facility_cnt_toilets,
+           coalesce(b.facility_cnt_drinking_water, 0)::integer AS facility_cnt_drinking_water,
+           coalesce(b.facility_cnt_pharmacy, 0)::integer AS facility_cnt_pharmacy
     FROM network_edge_attributes a
-        LEFT JOIN facility_ratio b USING (edge_id)
+        LEFT JOIN facility_selected b USING (edge_id)
 );
 
 DROP TABLE network_edge_attributes;
 ALTER TABLE network_edge_attributes_tmp RENAME TO network_edge_attributes;
 
-DROP TABLE facility_count, facility_ratio;
+DROP TABLE facility_selected;
 {% endif %}
 -- ---------------------------------------------------------------------------------------------------------------------
 -- calculate indicator "crossings"
@@ -1195,6 +1215,10 @@ ALTER TABLE network_edge_attributes
     ADD COLUMN IF NOT EXISTS number_lanes_ft numeric,
     ADD COLUMN IF NOT EXISTS number_lanes_tf numeric,
     ADD COLUMN IF NOT EXISTS facilities numeric,
+    ADD COLUMN IF NOT EXISTS facility_cnt_shelter integer,
+    ADD COLUMN IF NOT EXISTS facility_cnt_toilets integer,
+    ADD COLUMN IF NOT EXISTS facility_cnt_drinking_water integer,
+    ADD COLUMN IF NOT EXISTS facility_cnt_pharmacy integer,
     ADD COLUMN IF NOT EXISTS crossings numeric,
     ADD COLUMN IF NOT EXISTS buildings numeric,
     ADD COLUMN IF NOT EXISTS greenness numeric,
