@@ -25,7 +25,8 @@ DROP FUNCTION IF EXISTS calculate_index(varchar, numeric,
     numeric, numeric,
     boolean, numeric,
     boolean, numeric,
-    numeric, numeric);
+    numeric, numeric,
+    varchar, numeric);
 DROP FUNCTION IF EXISTS calculate_index;
 
 CREATE OR REPLACE FUNCTION calculate_index(
@@ -51,6 +52,7 @@ CREATE OR REPLACE FUNCTION calculate_index(
     IN water boolean, IN water_weight numeric,
     IN bench boolean, IN bench_weight numeric,
     IN noise numeric, IN noise_weight numeric,
+    IN lighting varchar, IN lighting_weight numeric,
     OUT index numeric,
     OUT index_robustness numeric,
     OUT index_explanation json
@@ -85,7 +87,9 @@ BEGIN
         CASE WHEN greenness_weight IS NOT NULL THEN greenness_weight ELSE 0 END +
         CASE WHEN water_weight IS NOT NULL THEN water_weight ELSE 0 END +
         CASE WHEN bench_weight IS NOT NULL THEN bench_weight ELSE 0 END +
-        CASE WHEN noise_weight IS NOT NULL THEN noise_weight ELSE 0 END;
+        CASE WHEN noise_weight IS NOT NULL THEN noise_weight ELSE 0 END +
+        CASE WHEN lighting_weight IS NOT NULL THEN lighting_weight ELSE 0 END ;
+        
 
     weights_sum := 0;
     weights_sum :=
@@ -106,7 +110,8 @@ BEGIN
         CASE WHEN greenness IS NOT NULL AND greenness_weight IS NOT NULL THEN greenness_weight ELSE 0 END +
         CASE WHEN water IS NOT NULL AND water_weight IS NOT NULL THEN water_weight ELSE 0 END +
         CASE WHEN bench IS NOT NULL AND bench_weight IS NOT NULL THEN bench_weight ELSE 0 END +
-        CASE WHEN noise IS NOT NULL AND noise_weight IS NOT NULL THEN noise_weight ELSE 0 END;
+        CASE WHEN noise IS NOT NULL AND noise_weight IS NOT NULL THEN noise_weight ELSE 0 END +
+        CASE WHEN lighting IS NOT NULL AND lighting_weight IS NOT NULL THEN lighting_weight ELSE 0 END ;
 
     IF weights_sum > 0 THEN
         index := 0;

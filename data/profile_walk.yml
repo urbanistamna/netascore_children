@@ -23,6 +23,7 @@ weights:
   water: 0.4
   noise: 0.3
   bench: 0.2
+  lighting: 0.3
 
 
 # =================================================================== #
@@ -183,4 +184,10 @@ indicator_mapping:
       g55: 0.6
       g10: 0.8
       ge0: 1
+
+  - indicator: lighting
+    mapping:
+      "Yes": 1
+      "No": 0
+      Intermittent: 0.5
       
