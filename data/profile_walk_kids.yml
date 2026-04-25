@@ -21,7 +21,10 @@ weights:
   buildings: 0.1
   greenness: 0.3
   water: 0.4
+  sights: 0.4
   noise: 0.3
+  benches: 0.2
+  lighting: 0.3
 
 
 # =================================================================== #
@@ -90,10 +93,9 @@ indicator_mapping:
 
   - indicator: parking
     mapping:
-      "yes": 0
-      "no": 1
-      True: 0
-      False: 1
+      allowed: 0
+      implicit: 0.5
+      forbidden: 1
 
   - indicator: pavement
     mapping:
@@ -165,9 +167,14 @@ indicator_mapping:
       e0: 0
   
   - indicator: water
-    mapping:
-      True: 1
-      False: 0
+    classes:
+      g0: 1
+      e0: 0
+  
+  - indicator: benches
+    classes:
+      g0: 1
+      e0: 0
 
   - indicator: noise
     classes:
@@ -175,4 +182,14 @@ indicator_mapping:
       g55: 0.6
       g10: 0.8
       ge0: 1
-      
+
+  - indicator: sights
+    classes:
+      g0: 1
+      e0: 0
+
+  - indicator: lighting
+    mapping:
+      "Yes": 1
+      "No": 0
+      Intermittent: 0.5

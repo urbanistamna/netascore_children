@@ -81,66 +81,6 @@ def _build_sql_overrides(overrides_yml: dict) -> str:
     # compile result into template
     return sql
 
-
-def _is_numeric_class_key(key) -> bool:
-    """Check if class key matches supported numeric class syntax (e.g., g10, le0.5, e0)."""
-    if key is None:
-        return True
-    k = str(key)
-    if k == "_default_":
-        return True
-    return re.fullmatch(r"(g|ge|l|le|e|ne)?-?[0-9]+(\.[0-9]+)?", k) is not None
-
-
-def _build_facility_weight_expression(facility_weights: dict) -> str:
-    """Build normalized facilities score from named facility-type density weights."""
-    facility_columns = {
-        "shelter": "facility_density_shelter",
-        "toilets": "facility_density_toilets",
-        "drinking_water": "facility_density_drinking_water",
-        "pharmacy": "facility_density_pharmacy",
-    }
-
-    weight_terms = []
-    weight_total = 0.0
-
-    for raw_key, raw_weight in facility_weights.items():
-        key = str(raw_key)
-        if key == "_default_":
-            continue
-        if key not in facility_columns:
-            supported = ", ".join(sorted(facility_columns.keys()))
-            raise Exception(
-                f"Unsupported facilities class key '{key}'. Supported keys: {supported}."
-            )
-        if raw_weight is None or not h.is_numeric(raw_weight):
-            raise Exception(
-                f"Facility weight for '{key}' must be numeric. Received: {raw_weight}."
-            )
-
-        weight = float(raw_weight)
-        if weight <= 0:
-            continue
-
-        weight_total += weight
-        column = facility_columns[key]
-        weight_terms.append(f"(coalesce({column}, 0) * {weight})")
-
-    if weight_total <= 0 or len(weight_terms) == 0:
-        return "0"
-
-    return f"(({ ' + '.join(weight_terms) }) / {weight_total})"
-
-
-def _uses_named_facilities_classes(indicator_yml: dict) -> bool:
-    """Return true when facilities mapping uses named keys like toilets/shelter."""
-    if h.get_safe_name(indicator_yml.get("indicator")) != "facilities":
-        return False
-    classes = indicator_yml.get("classes")
-    if not isinstance(classes, dict):
-        return False
-    return any(not _is_numeric_class_key(class_key) for class_key in classes.keys())
-
 def _build_sql_indicator_mapping_internal_(indicator_yml: dict, name_hierarchy: str = "", force_default_value: bool = False, def_value = None) -> str:
     indicator_name = h.get_safe_name(indicator_yml.get('indicator'))
     full_name = name_hierarchy + indicator_name
@@ -158,13 +98,6 @@ def _build_sql_indicator_mapping_internal_(indicator_yml: dict, name_hierarchy: 
     contents = indicator_yml.get(k)
     if k not in ["mapping", "classes"]:
         raise Exception(f"You provided an unknown indicator mapping '{k}' for indicator '{full_name}'. Please update your mode profile file accordingly.")
-
-    # Special handling: allow named facility-type keys under facilities/classes, e.g. toilets: 0.8
-    if k == "classes" and indicator_name == "facilities":
-        has_named_keys = any(not _is_numeric_class_key(class_key) for class_key in contents.keys())
-        if has_named_keys:
-            return _build_facility_weight_expression(contents)
-
     # parse each of the given keys
     for key in contents:
         # handle special assignment value types
@@ -238,12 +171,10 @@ def _build_sql_indicator_mapping_internal_(indicator_yml: dict, name_hierarchy: 
 
 def _build_sql_indicator_mapping(indicator_yml: dict) -> str:
     indicator_name = h.get_safe_name(indicator_yml.get('indicator'))
-    uses_named_facilities = _uses_named_facilities_classes(indicator_yml)
     value_assignments = _build_sql_indicator_mapping_internal_(indicator_yml)
     # compile full indicator SQL around indicator mapping code
-    condition = f"{indicator_name}_weight IS NOT NULL" if uses_named_facilities else f"{indicator_name} IS NOT NULL AND {indicator_name}_weight IS NOT NULL"
     sql: str = f"""
-        IF {condition} THEN
+        IF {indicator_name} IS NOT NULL AND {indicator_name}_weight IS NOT NULL THEN
             indicator :=
                 {value_assignments};
             weight := {indicator_name}_weight / weights_sum;

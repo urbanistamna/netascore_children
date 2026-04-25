@@ -3,7 +3,7 @@ version: 1.2
 # global settings that are relevant across individual processing steps
 global:
   #target_srid: 32633 # NOTE: currently, only metric unit systems (e.g. UTM) supported
-  case_id: salzburg # unique id (name) - useful if working with different datasets / areas of interest
+  case_id: austria # unique id (name) - useful if working with different datasets / areas of interest
 
 # this part is optional: if not specified, the internal Postgres-DB will be used (inside Docker container)
 database:
@@ -19,20 +19,15 @@ database:
 import:
   type: osm
   on_existing: delete
-  place_name: Salzburg
-  #other currently supported query parameters: admin_level, zip_code
-  #alternative for querying using bounding box (please also specify 'srid' in 'global_settings' in that case):
-  #bbox: 47.7957,13.0117,47.8410,13.0748
-  interactive: False # if true, allows for interactive choice in case multiple results were returned for given AOI query (otherwise first is used)
-  buffer: 1000
-
+  filename: austria-260409.osm.pbf
+  
 index:
   compute_explanation: True
 
 profiles:
   -
     profile_name: bike
-    filename: profile_bike.yml
+    filename: profile_bike_kids.yml
     filter_access_bike: True
   -
     profile_name: bike_tourism
@@ -40,7 +35,7 @@ profiles:
     filter_access_bike: True
   -
     profile_name: walk
-    filename: profile_walk.yml
+    filename: profile_walk_kids.yml
     filter_access_walk: True
 
 export:

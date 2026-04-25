@@ -10,8 +10,7 @@ database:
   on_existing: delete # skip, delete, abort
   # for production environments, user and password should be specified as ENV variables instead
   password: postgres
-  username: amnaazeem
-  # host: netascore-db
+  username: postgres
   host: localhost
   port: 5433
   dbname: netascore
@@ -20,12 +19,7 @@ database:
 import:
   type: osm
   on_existing: delete
-  place_name: Salzburg
-  #other currently supported query parameters: admin_level, zip_code
-  #alternative for querying using bounding box (please also specify 'srid' in 'global_settings' in that case):
-  #bbox: 47.7957,13.0117,47.8410,13.0748
-  interactive: False # if true, allows for interactive choice in case multiple results were returned for given AOI query (otherwise first is used)
-  buffer: 1000
+  filename: osm_download_salzburg.xml
 
 index:
   compute_explanation: True
@@ -33,11 +27,15 @@ index:
 profiles:
   -
     profile_name: bike
-    filename: profile_bike.yml
+    filename: profile_bike_kids.yml
+    filter_access_bike: True
+  -
+    profile_name: bike_tourism
+    filename: profile_bike_tourism.yml
     filter_access_bike: True
   -
     profile_name: walk
-    filename: profile_walk.yml
+    filename: profile_walk_kids.yml
     filter_access_walk: True
 
 export:
