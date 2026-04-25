@@ -692,6 +692,67 @@ class OsmImporter(DbStep):
             db.commit()
         h.logEndTask()
 
+
+        # create datasets for individual facility types
+        # Create dataset "play_and_outdoor"
+        h.logBeginTask('create dataset "play_and_outdoor"')
+        if db.handle_conflicting_output_tables(['play_and_outdoor'], schema):
+            db.execute('''
+                CREATE TABLE play_and_outdoor AS (
+                    SELECT
+                        ST_Transform(way, %(target_srid)s)::geometry(Point, %(target_srid)s) AS geom
+                    FROM osm_point
+                    WHERE leisure IN ('playground', 'park', 'sports_centre', 'pitch', 'garden', 'track', 'fitness_station')
+                OR amenity IN ('swimming_pool')
+                );
+            ''', {'target_srid': GlobalSettings.get_target_srid()})
+            db.commit()
+        h.logEndTask()  
+
+        # Create dataset "attractiveness"
+        h.logBeginTask('create dataset "attractiveness"')
+        if db.handle_conflicting_output_tables(['attractiveness'], schema):
+            db.execute('''
+                CREATE TABLE attractiveness AS (
+                    SELECT
+                        ST_Transform(way, %(target_srid)s)::geometry(Point, %(target_srid)s) AS geom
+                    FROM osm_point
+                    WHERE amenity IN ('arts_centre', 'artwork', 'cinema', 'theatre', 'music_venue', 'community_centre', 'toy_library', 'public_bath')
+                OR tourism IN ('museum', 'attraction', 'gallery', 'viewpoint','castle','theme_park' , 'zoo')
+                );
+            ''', {'target_srid': GlobalSettings.get_target_srid()})
+            db.commit()
+        h.logEndTask()
+
+        # Create dataset "comfort_facilities"
+        h.logBeginTask('create dataset "comfort_facilities"')
+        if db.handle_conflicting_output_tables(['comfort_facilities'], schema):
+            db.execute('''
+                CREATE TABLE comfort_facilities AS (
+                    SELECT
+                        ST_Transform(way, %(target_srid)s)::geometry(Point, %(target_srid)s) AS geom
+                    FROM osm_point
+                    WHERE  amenity IN ('drinking_water', 'toilets', 'shelter', 'bench', 'waste_basket', 'water_point', 'watering_place')
+                );
+            ''', {'target_srid': GlobalSettings.get_target_srid()})
+            db.commit()
+        h.logEndTask() 
+
+        # Create dataset "eating_facilities"
+        h.logBeginTask('create dataset "eating_facilities"')
+        if db.handle_conflicting_output_tables(['eating_facilities'], schema):
+            db.execute('''
+                CREATE TABLE eating_facilities AS (
+                    SELECT
+                        ST_Transform(way, %(target_srid)s)::geometry(Point, %(target_srid)s) AS geom
+                    FROM osm_point
+                    WHERE  amenity IN ('cafe', 'restaurant', 'fast_food', 'ice_cream', 'food_court','marketplace', 'vending_machine')
+                OR shop IN ('bakery', 'confectionery', 'pastry', 'beverages', 'supermarket')
+                );
+            ''', {'target_srid': GlobalSettings.get_target_srid()})
+            db.commit()
+        h.logEndTask()
+
         # close database connection
         h.log('close database connection')
         db.close()

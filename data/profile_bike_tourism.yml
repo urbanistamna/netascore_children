@@ -25,6 +25,11 @@ weights:
   noise: 0.1
   benches: NULL
   lighting: NULL
+  play_and_outdoor: NULL
+  attractiveness: NULL
+  comfort_facilities: NULL
+  eating_facilities: NULL
+ 
 
 
 # =================================================================== #
@@ -193,3 +198,24 @@ indicator_mapping:
       "Yes": 1
       "No": 0
       Intermittent: 0.5
+
+  - indicator: play_and_outdoor
+    classes:
+      g0: 1
+      e0: 0
+
+  - indicator: attractiveness
+    classes:
+      g0: 1
+      e0: 0        
+
+  - indicator: comfort_facilities
+    classes:
+      g0: 1
+      e0: 0 
+
+  - indicator: eating_facilities
+    classes:
+      g0: 1   
+      e0: 0 
+

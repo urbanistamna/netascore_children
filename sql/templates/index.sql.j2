@@ -61,7 +61,11 @@ CREATE TABLE network_edge_index_tmp AS (
             b.water, {{ water }},
             b.sights, {{ sights }},
             b.noise, {{ noise }},
-            b.lighting, {{ lighting }}
+            b.lighting, {{ lighting }},
+            b.play_and_outdoor, {{ play_and_outdoor }},
+            b.attractiveness, {{ attractiveness }},
+            b.comfort_facilities, {{ comfort_facilities }},
+            b.eating_facilities, {{ eating_facilities }}
         ) ft,
         LATERAL calculate_index(
             b.bicycle_infrastructure_tf, {{ bicycle_infrastructure }},
@@ -83,7 +87,11 @@ CREATE TABLE network_edge_index_tmp AS (
             b.water, {{ water }},
             b.sights, {{ sights }},
             b.noise, {{ noise }},
-            b.lighting, {{ lighting }}
+            b.lighting, {{ lighting }},
+            b.play_and_outdoor, {{ play_and_outdoor }},
+            b.attractiveness, {{ attractiveness }},
+            b.comfort_facilities, {{ comfort_facilities }},
+            b.eating_facilities, {{ eating_facilities }}
         ) tf
     WHERE 
         false

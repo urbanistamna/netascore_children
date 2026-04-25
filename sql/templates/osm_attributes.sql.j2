@@ -1390,7 +1390,167 @@ DROP TABLE network_edge_attributes;
 ALTER TABLE network_edge_attributes_tmp RENAME TO network_edge_attributes;
 
 DROP TABLE lighting;
+-- ---------------------------------------------------------------------------------------------------------------------
+-- calculate indicator "play_and_outdoor"
+-- ---------------------------------------------------------------------------------------------------------------------
+{% if table_play_and_outdoor %}
+DROP TABLE IF EXISTS play_and_outdoor_count;
+CREATE TABLE play_and_outdoor_count AS ( -- 30 s
+    SELECT b.edge_id,
+           count(a.*) AS play_and_outdoor_count
+    FROM {{ table_play_and_outdoor | sqlsafe }} a,
+         network_edge b
+    WHERE ST_DWithin(a.geom, b.geom, 30)
+    GROUP BY edge_id
+);
 
+DROP TABLE IF EXISTS play_and_outdoor_ratio;
+CREATE TABLE play_and_outdoor_ratio AS ( -- 4 s
+    SELECT a.edge_id,
+           (a.play_and_outdoor_count / b.length * 100.0)::numeric AS play_and_outdoor_ratio
+    FROM play_and_outdoor_count a
+         LEFT JOIN network_edge b USING (edge_id)
+);
+
+-- ---------------------------------------------------------------------------------------------------------------------
+
+ALTER TABLE network_edge_attributes DROP COLUMN IF EXISTS play_and_outdoor;
+
+DROP TABLE IF EXISTS network_edge_attributes_tmp;
+CREATE TABLE network_edge_attributes_tmp AS (
+    SELECT a.*,
+           coalesce(round(b.play_and_outdoor_ratio, 2), 0)::numeric AS play_and_outdoor
+    FROM network_edge_attributes a
+        LEFT JOIN play_and_outdoor_ratio b USING (edge_id)
+);
+
+DROP TABLE network_edge_attributes;
+ALTER TABLE network_edge_attributes_tmp RENAME TO network_edge_attributes;
+
+DROP TABLE play_and_outdoor_count, play_and_outdoor_ratio;
+{% endif %}
+
+-- ---------------------------------------------------------------------------------------------------------------------
+-- calculate indicator "attractiveness"
+-- ---------------------------------------------------------------------------------------------------------------------
+{% if table_play_and_outdoor %}
+DROP TABLE IF EXISTS attractiveness_count;
+CREATE TABLE attractiveness_count AS ( -- 30 s
+    SELECT b.edge_id,
+           count(a.*) AS attractiveness_count
+    FROM {{ table_play_and_outdoor | sqlsafe }} a,
+         network_edge b
+    WHERE ST_DWithin(a.geom, b.geom, 30)
+    GROUP BY edge_id
+);
+
+DROP TABLE IF EXISTS attractiveness_ratio;
+CREATE TABLE attractiveness_ratio AS ( -- 4 s
+    SELECT a.edge_id,
+           (a.attractiveness_count / b.length * 100.0)::numeric AS attractiveness_ratio
+    FROM attractiveness_count a
+         LEFT JOIN network_edge b USING (edge_id)
+);
+
+-- ---------------------------------------------------------------------------------------------------------------------
+
+ALTER TABLE network_edge_attributes DROP COLUMN IF EXISTS attractiveness;
+
+DROP TABLE IF EXISTS network_edge_attributes_tmp;
+CREATE TABLE network_edge_attributes_tmp AS (
+    SELECT a.*,
+           coalesce(round(b.attractiveness_ratio, 2), 0)::numeric AS attractiveness
+    FROM network_edge_attributes a
+        LEFT JOIN attractiveness_ratio b USING (edge_id)
+);
+
+DROP TABLE network_edge_attributes;
+ALTER TABLE network_edge_attributes_tmp RENAME TO network_edge_attributes;
+
+DROP TABLE attractiveness_count, attractiveness_ratio;
+{% endif %}
+
+
+-- ---------------------------------------------------------------------------------------------------------------------
+-- calculate indicator "comfort_facilities"
+-- ---------------------------------------------------------------------------------------------------------------------
+{% if table_comfort_facilities %}
+DROP TABLE IF EXISTS comfort_facilities_count;
+CREATE TABLE comfort_facilities_count AS ( -- 30 s
+    SELECT b.edge_id,
+           count(a.*) AS comfort_facilities_count
+    FROM {{ table_comfort_facilities | sqlsafe }} a,
+         network_edge b
+    WHERE ST_DWithin(a.geom, b.geom, 30)
+    GROUP BY edge_id
+);
+
+DROP TABLE IF EXISTS comfort_facilities_ratio;
+CREATE TABLE comfort_facilities_ratio AS ( -- 4 s
+    SELECT a.edge_id,
+           (a.comfort_facilities_count / b.length * 100.0)::numeric AS comfort_facilities_ratio
+    FROM comfort_facilities_count a
+         LEFT JOIN network_edge b USING (edge_id)
+);
+
+-- ---------------------------------------------------------------------------------------------------------------------
+
+ALTER TABLE network_edge_attributes DROP COLUMN IF EXISTS comfort_facilities;
+
+DROP TABLE IF EXISTS network_edge_attributes_tmp;
+CREATE TABLE network_edge_attributes_tmp AS (
+    SELECT a.*,
+           coalesce(round(b.comfort_facilities_ratio, 2), 0)::numeric AS comfort_facilities
+    FROM network_edge_attributes a
+        LEFT JOIN comfort_facilities_ratio b USING (edge_id)
+);
+
+DROP TABLE network_edge_attributes;
+ALTER TABLE network_edge_attributes_tmp RENAME TO network_edge_attributes;
+
+DROP TABLE comfort_facilities_count, comfort_facilities_ratio;
+{% endif %}
+
+
+-- ---------------------------------------------------------------------------------------------------------------------
+-- calculate indicator "eating_facilities"
+-- ---------------------------------------------------------------------------------------------------------------------
+{% if table_eating_facilities %}
+DROP TABLE IF EXISTS eating_facilities_count;
+CREATE TABLE eating_facilities_count AS ( -- 30 s
+    SELECT b.edge_id,
+           count(a.*) AS eating_facilities_count
+    FROM {{ table_eating_facilities | sqlsafe }} a,
+         network_edge b
+    WHERE ST_DWithin(a.geom, b.geom, 30)
+    GROUP BY edge_id
+);
+
+DROP TABLE IF EXISTS eating_facilities_ratio;
+CREATE TABLE eating_facilities_ratio AS ( -- 4 s
+    SELECT a.edge_id,
+           (a.eating_facilities_count / b.length * 100.0)::numeric AS eating_facilities_ratio
+    FROM eating_facilities_count a
+         LEFT JOIN network_edge b USING (edge_id)
+);
+
+-- ---------------------------------------------------------------------------------------------------------------------
+
+ALTER TABLE network_edge_attributes DROP COLUMN IF EXISTS eating_facilities;
+
+DROP TABLE IF EXISTS network_edge_attributes_tmp;
+CREATE TABLE network_edge_attributes_tmp AS (
+    SELECT a.*,
+           coalesce(round(b.eating_facilities_ratio, 2), 0)::numeric AS eating_facilities
+    FROM network_edge_attributes a
+        LEFT JOIN eating_facilities_ratio b USING (edge_id)
+);
+
+DROP TABLE network_edge_attributes;
+ALTER TABLE network_edge_attributes_tmp RENAME TO network_edge_attributes;
+
+DROP TABLE eating_facilities_count, eating_facilities_ratio;
+{% endif %}
 
 -- ---------------------------------------------------------------------------------------------------------------------
 -- add missing columns and primary keys
@@ -1431,7 +1591,11 @@ ALTER TABLE network_edge_attributes
     ADD COLUMN IF NOT EXISTS water numeric,
     ADD COLUMN IF NOT EXISTS sights numeric,
     ADD COLUMN IF NOT EXISTS noise numeric,
-    ADD COLUMN IF NOT EXISTS lighting varchar;
+    ADD COLUMN IF NOT EXISTS lighting varchar,
+    ADD COLUMN IF NOT EXISTS play_and_outdoor numeric,
+    ADD COLUMN IF NOT EXISTS attractiveness numeric,
+    ADD COLUMN IF NOT EXISTS comfort_facilities numeric,
+    ADD COLUMN IF NOT EXISTS eating_facilities numeric;
 
 
 ALTER TABLE network_edge_attributes ADD PRIMARY KEY (edge_id);
