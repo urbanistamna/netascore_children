@@ -717,7 +717,7 @@ class OsmImporter(DbStep):
                     SELECT
                         ST_Transform(way, %(target_srid)s)::geometry(Point, %(target_srid)s) AS geom
                     FROM osm_point
-                    WHERE amenity IN ('arts_centre', 'artwork', 'cinema', 'theatre', 'music_venue', 'community_centre', 'toy_library', 'public_bath')
+                    WHERE amenity IN ('arts_centre', 'artwork', 'cinema', 'theatre', 'music_venue', 'community_centre', 'toy_library', 'public_bath', 'fountain')
                 OR tourism IN ('museum', 'attraction', 'gallery', 'viewpoint','castle','theme_park' , 'zoo')
                 );
             ''', {'target_srid': GlobalSettings.get_target_srid()})
@@ -752,10 +752,6 @@ class OsmImporter(DbStep):
             ''', {'target_srid': GlobalSettings.get_target_srid()})
             db.commit()
         h.logEndTask()
-
-        # close database connection
-        h.log('close database connection')
-        db.close()
 
 
 def create_importer(db_settings: DbSettings, import_type: str):

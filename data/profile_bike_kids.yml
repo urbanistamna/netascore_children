@@ -25,10 +25,11 @@ weights:
   noise: NULL
   benches: NULL
   lighting: 0.3
-  play_and_outdoor: 0.4
-  attractiveness: 0.2
-  comfort_facilities: 0.3
-  eating_facilities: 0.3
+  play_and_outdoor: NULL
+  attractiveness: NULL
+  comfort_facilities: NULL
+  eating_facilities: NULL
+  
   
 
 
@@ -60,13 +61,14 @@ indicator_mapping:
     mapping:
       "bicycle_way": 1
       "mixed_way": 0.9
+      "mixed_way_non_designated": 0.9
       "bicycle_road": 0.85
-      "cyclestreet": 0.8
       "bicycle_lane": 0.75
       "bus_lane": 0.75
       "shared_lane": 0.5
       "undefined": 0.2
       "no": 0
+      "no_separate": 0
 
   - indicator: designated_route
     mapping:
@@ -219,4 +221,5 @@ indicator_mapping:
     classes:
       g0: 1
       e0: 0 
-      
+
+ 

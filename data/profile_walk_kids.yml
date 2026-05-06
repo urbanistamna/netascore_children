@@ -16,20 +16,20 @@ weights:
   width: NULL
   gradient: 0.3
   number_lanes: 0.1
-  facilities: 0.3
+  facilities: NULL
   crossings: 0.2
   buildings: 0.1
   greenness: 0.3
   water: 0.4
-  sights: 0.4
+  sights: NULL
   noise: 0.3
-  benches: 0.2
+  benches: NULL
   lighting: 0.3
-  play_and_outdoor: 0.4
+  play_and_outdoor: 0.2
   attractiveness: 0.2
-  comfort_facilities: 0.3
-  eating_facilities: 0.3
-  
+  comfort_facilities: 0.1
+  eating_facilities: 0.1
+ 
 
 
 # =================================================================== #
@@ -59,10 +59,12 @@ indicator_mapping:
     mapping:
       "pedestrian_area": 1
       "pedestrian_way": 1
-      "mixed_way": 0.85
-      "stairs": 0.7
-      "sidewalk": 0.5
+      "mixed_way": 0.5 # decreased the weight from 0.85 to 0.5 - conflicting situation between cyclist & pedestrian
+      "mixed_way_non_designated": 0.5
+      "stairs": 0.3  # decreased the weight from 0.5 to 0.3 - for caregivers with kids, stairs are not ideal, but they are still better than no infrastructure at all
+      "sidewalk": 0.85 # increased the weight from 0.5 to 0.85 - increasing the importance
       "no": 0
+      "no_separate": 0
 
   - indicator: road_category
     mapping:
@@ -109,7 +111,7 @@ indicator_mapping:
       "soft": 0.4
       "cobble": 0
   
-  - indicator: width
+  - indicator: width  #for later
     classes:
       g5: 1
       g4: 0.9
@@ -195,9 +197,9 @@ indicator_mapping:
 
   - indicator: lighting
     mapping:
-      "Yes": 1
-      "No": 0
-      Intermittent: 0.5
+      "yes": 1
+      "no": 0
+      intermittent: 0.5
   
   - indicator: play_and_outdoor
     classes:
@@ -218,3 +220,4 @@ indicator_mapping:
     classes:
       g0: 1   
       e0: 0 
+

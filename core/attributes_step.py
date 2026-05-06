@@ -44,10 +44,12 @@ class GipAttributesStep(DbStep):
                 'table_water': db.use_if_exists('water', self.db_settings.entities.data_schema),
                 'table_parking': db.use_if_exists('parking', self.db_settings.entities.data_schema),
                 'table_sights': db.use_if_exists('sights', self.db_settings.entities.data_schema),
+                'table_lighting': db.use_if_exists('lighting', self.db_settings.entities.data_schema),
                 'table_play_and_outdoor': db.use_if_exists('play_and_outdoor', self.db_settings.entities.data_schema),
                 'table_attractiveness': db.use_if_exists('attractiveness', self.db_settings.entities.data_schema),
                 'table_comfort_facilities': db.use_if_exists('comfort_facilities', self.db_settings.entities.data_schema),
-                'table_eating_facilities': db.use_if_exists('eating_facilities', self.db_settings.entities.data_schema)
+                'table_eating_facilities': db.use_if_exists('eating_facilities', self.db_settings.entities.data_schema),
+                'table_traffic_calming': db.use_if_exists('traffic_calming', self.db_settings.entities.data_schema)
 
             }
             if params["table_dem"] is not None:
@@ -102,11 +104,13 @@ class OsmAttributesStep(DbStep):
                 'table_water': db.use_if_exists('water', self.db_settings.entities.data_schema),
                 'table_parking': db.use_if_exists('parking', self.db_settings.entities.data_schema), #TODO: check if this works with file import
                 'table_sights': db.use_if_exists('sights', self.db_settings.entities.data_schema),
+                'table_lighting': db.use_if_exists('lighting', self.db_settings.entities.data_schema),
                 'table_play_and_outdoor': db.use_if_exists('play_and_outdoor', self.db_settings.entities.data_schema),
                 'table_attractiveness': db.use_if_exists('attractiveness', self.db_settings.entities.data_schema),
                 'table_comfort_facilities': db.use_if_exists('comfort_facilities', self.db_settings.entities.data_schema),
                 'table_eating_facilities': db.use_if_exists('eating_facilities', self.db_settings.entities.data_schema),
                 'target_srid': GlobalSettings.get_target_srid()
+                
             }
             db.execute_template_sql_from_file("osm_attributes", params)
             db.commit()

@@ -29,6 +29,7 @@ weights:
   attractiveness: NULL
   comfort_facilities: NULL
   eating_facilities: NULL
+  
  
 
 
@@ -218,4 +219,5 @@ indicator_mapping:
     classes:
       g0: 1   
       e0: 0 
+
 

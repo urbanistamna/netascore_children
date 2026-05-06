@@ -87,6 +87,7 @@ conda activate netascore
 
 ### 2. run the yml file
 python generate_index.py data/settings_osm_query.yml
+python generate_index.py data/settings_osm_query_kids-localFile.yml
 
 ### extra info:
 #### connect to postgres: 
