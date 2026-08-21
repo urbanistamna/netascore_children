@@ -77,10 +77,6 @@ For running NetAScore without Docker you need several software packages and Pyth
 - raster2pgsql
 - [several python libraries](../main/requirements.txt)
 
-
-
-
-
 # Instructions:
 ### 1. activate conda environment 
 conda activate netascore
@@ -89,14 +85,3 @@ conda activate netascore
 python generate_index.py data/settings_osm_query.yml
 python generate_index.py data/settings_osm_query_kids-localFile.yml
 
-### extra info:
-#### connect to postgres: 
-/Library/PostgreSQL/18/bin/psql -p 5433 -U amnaazeem netascore
-#### change password:
-ALTER USER amnaazeem WITH PASSWORD 'newpassword';
-#### exit postgres:
-\q
-
-
-## start progress
-sudo -u postgres /Library/PostgreSQL/18/bin/pg_ctl -D /Library/PostgreSQL/18/data start
